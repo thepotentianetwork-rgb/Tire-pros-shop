@@ -56,8 +56,17 @@
   "hasMap": "https://www.google.com/maps/search/?api=1&query=Tire%20Pros%20Shop%2C%201704%20S%20800%20W%2C%20Logan%2C%20UT&query_place_id=ChIJb6d7QSp_VIcREOECBWVklIU",
   "openingHoursSpecification": [{
     "@type": "OpeningHoursSpecification",
-    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
     "opens": "08:00", "closes": "18:00"
+  },{
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": "Saturday",
+    "opens": "08:00", "closes": "14:00"
+  },{
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": "Sunday",
+    "opens": "08:00", "closes": "12:00",
+    "description": "By appointment only"
   }],
   "areaServed": [
     {"@type":"City","name":"Logan"},{"@type":"City","name":"North Logan"},
@@ -561,14 +570,14 @@ const SHOP = {
   name:  "Tire Pros Shop",   // [EDIT]
   phone: "(435) 282-0383",                   // [EDIT]
   tel:   "+14352820383",                     // [EDIT]
-  hours: [               // 0 = Sunday. Use null for closed.
-    ["Sunday",    null],
+  hours: [               // 0 = Sunday. Use null for closed. Optional 3rd item = note.
+    ["Sunday",    [8,12], "by appointment"],
     ["Monday",    [8,18]],
     ["Tuesday",   [8,18]],
     ["Wednesday", [8,18]],
     ["Thursday",  [8,18]],
     ["Friday",    [8,18]],
-    ["Saturday",  [8,18]]
+    ["Saturday",  [8,14]]
   ]
 };
 
@@ -593,8 +602,8 @@ function chipRow(host, items, value, onPick){
 function drawHours(){
   const today = new Date().getDay();
   document.querySelectorAll(".hours").forEach(el=>{
-    el.innerHTML = SHOP.hours.map(([name,h],i)=>{
-      const txt = h ? `${(h[0]%12)||12}:00 AM – ${(h[1]%12)||12}:00 PM` : "Closed";
+    el.innerHTML = SHOP.hours.map(([name,h,note],i)=>{
+      const txt = h ? `${fmtHour(h[0])} – ${fmtHour(h[1])}${note ? ` <em>(${note})</em>` : ""}` : "Closed";
       return `<div class="${i===today?"today":""}"><span>${name}</span>${txt}</div>`;
     }).join("");
   });
@@ -617,7 +626,7 @@ function slotsFor(date){
   const [open,close] = SHOP.hours[date.getDay()][1], out = [];
   for(let h=open; h<close; h++){
     for(const m of [0,30]){
-      const label = ((h%12)||12)+":"+String(m).padStart(2,"0")+(h<12?" AM":" PM");
+      const label = ((h%12)||12)+":"+String(m).padStart(2,"0")+(h<12?" AM":" PM"); // 12 -> 12:30 PM
       out.push({label, taken:((date.getDate()*7 + h*3 + m) % 5) === 0});
     }
   }
@@ -664,21 +673,23 @@ function wireForm(){
 }
 
 /* ---------- live open/closed status (footer) ---------- */
-function fmtHour(h){ return ((h%12)||12) + ":00 " + (h<12 ? "AM" : "PM"); }
+function fmtHour(h){ return ((h%12)||12) + ":00 " + (h<12 ? "AM" : "PM"); }  // 12 -> 12:00 PM, 14 -> 2:00 PM
+/* Shop's local time (Logan, UT) so the banner is right for any visitor's timezone */
+function shopNow(){ const s = new Date().toLocaleString("en-US",{timeZone:"America/Denver"}); return new Date(s); }
 function drawStatus(){
   const els = document.querySelectorAll(".status");
   if(!els.length) return;
-  const now = new Date(), d = now.getDay(), mins = now.getHours()*60 + now.getMinutes();
-  const h = SHOP.hours[d][1];
+  const now = shopNow(), d = now.getDay(), mins = now.getHours()*60 + now.getMinutes();
+  const h = SHOP.hours[d][1], note = SHOP.hours[d][2];
   let txt = "";
   if(h && mins >= h[0]*60 && mins < h[1]*60){
-    txt = "Open until " + fmtHour(h[1]);
+    txt = note ? "Open by appointment until " + fmtHour(h[1]) : "Open until " + fmtHour(h[1]);
   } else if(h && mins < h[0]*60){
-    txt = "Opens today at " + fmtHour(h[0]);
+    txt = "Opens today at " + fmtHour(h[0]) + (note ? " (" + note + ")" : "");
   } else {
     for(let i=1;i<=7;i++){
       const n = (d+i)%7, nh = SHOP.hours[n][1];
-      if(nh){ txt = (i===1 ? "Opens tomorrow at " : "Opens " + DAY[n] + " at ") + fmtHour(nh[0]); break; }
+      if(nh){ txt = (i===1 ? "Opens tomorrow at " : "Opens " + DAY[n] + " at ") + fmtHour(nh[0]) + (SHOP.hours[n][2] ? " (" + SHOP.hours[n][2] + ")" : ""); break; }
     }
   }
   els.forEach(el => el.textContent = txt);

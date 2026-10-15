@@ -334,7 +334,10 @@ footer .hours .today,footer .hours .today span{color:var(--dot-lit)}
 .finance h2 em{font-style:normal;color:var(--dot-lit)}
 .finance p{margin:6px 0 0;color:var(--concrete);font-size:15.5px}
 .finance .btn{white-space:nowrap}
-@media (max-width:640px){.finance .btn{width:100%;text-align:center}}
+.finance .logos{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.finance .chip-logo{background:#fff;border-radius:10px;padding:8px 14px;display:flex;align-items:center;height:56px;box-sizing:border-box}
+.finance .chip-logo img{height:100%;width:auto;display:block}
+@media (max-width:640px){.finance .btn{width:100%;text-align:center}.finance .chip-logo{height:50px}}
 </style>
 </head>
 <body>
@@ -388,8 +391,12 @@ footer .hours .today,footer .hours .today span{color:var(--dot-lit)}
 <section class="finance" aria-label="Financing">
   <div class="wrap">
     <div>
-      <h2>Financing available &mdash; <em>Snap Finance &amp; Acima</em></h2>
+      <h2>Financing &amp; lease-to-own &mdash; <em>Snap Finance &amp; Acima</em></h2>
       <p>No credit needed options. Ask in store or call us.</p>
+      <div class="logos">
+        <span class="chip-logo"><img src="img/financing/snap-finance.svg" alt="Snap Finance" width="111" height="48"></span>
+        <span class="chip-logo"><img src="img/financing/acima-leasing.svg" alt="Acima Leasing" width="168" height="83"></span>
+      </div>
     </div>
     <a class="btn btn-dot" href="tel:+14352820383">Call (435) 282-0383</a>
   </div>

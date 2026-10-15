@@ -58,8 +58,17 @@
   "hasMap": "https://www.google.com/maps/search/?api=1&query=Tire%20Pros%20Shop%2C%201704%20S%20800%20W%2C%20Logan%2C%20UT&query_place_id=ChIJb6d7QSp_VIcREOECBWVklIU",
   "openingHoursSpecification": [{
     "@type": "OpeningHoursSpecification",
-    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
     "opens": "08:00", "closes": "18:00"
+  },{
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": "Saturday",
+    "opens": "08:00", "closes": "14:00"
+  },{
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": "Sunday",
+    "opens": "08:00", "closes": "12:00",
+    "description": "By appointment only"
   }],
   "areaServed": [
     {"@type":"City","name":"Logan"},{"@type":"City","name":"North Logan"},
@@ -319,6 +328,13 @@ footer .hours .today,footer .hours .today span{color:var(--dot-lit)}
 @media(max-width:760px){.thumb{display:grid}body{padding-bottom:56px}}
 
 @media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;scroll-behavior:auto !important}}
+.finance{background:var(--ink);color:var(--snow);border-top:3px solid var(--dot);border-bottom:3px solid var(--dot)}
+.finance .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 28px;padding-top:22px;padding-bottom:22px}
+.finance h2{font-family:var(--display);font-weight:800;font-size:clamp(20px,3.4vw,28px);letter-spacing:-.02em;margin:0;color:var(--snow)}
+.finance h2 em{font-style:normal;color:var(--dot-lit)}
+.finance p{margin:6px 0 0;color:var(--concrete);font-size:15.5px}
+.finance .btn{white-space:nowrap}
+@media (max-width:640px){.finance .btn{width:100%;text-align:center}}
 </style>
 </head>
 <body>
@@ -366,6 +382,16 @@ footer .hours .today,footer .hours .today span{color:var(--dot-lit)}
       <a class="btn" href="services.html">See what we do</a>
     </div>
     <p class="stamp" style="margin-top:22px"><span class="status"></span> &nbsp;·&nbsp; Walk in and we'll fit you in when a bay opens</p>
+  </div>
+</section>
+
+<section class="finance" aria-label="Financing">
+  <div class="wrap">
+    <div>
+      <h2>Financing available &mdash; <em>Snap Finance &amp; Acima</em></h2>
+      <p>No credit needed options. Ask in store or call us.</p>
+    </div>
+    <a class="btn btn-dot" href="tel:+14352820383">Call (435) 282-0383</a>
   </div>
 </section>
 
@@ -468,7 +494,7 @@ footer .hours .today,footer .hours .today span{color:var(--dot-lit)}
         <li><b>Quick.</b> Walk in without an appointment, or book a time around your class schedule. A low tire is a five-minute fix.</li>
         <li><b>No upsell.</b> You get the price before we start. If nothing's wrong, we tell you, and you don't pay anything.</li>
         <li><b>Ready for winter.</b> First winter in Cache Valley? We do snow tire swaps and fix the TPMS light the first cold snap turns on.</li>
-        <li><b>Open Saturdays.</b> Monday to Saturday, 8 to 6, just off Highway 89 on the south end of Logan.</li>
+        <li><b>Open Saturdays.</b> Mon–Fri 8 to 6, Sat 8 to 2, Sun 8 to noon by appointment, just off Highway 89 on the south end of Logan.</li>
       </ul>
     </div>
   </div>
@@ -569,14 +595,14 @@ const SHOP = {
   name:  "Tire Pros Shop",   // [EDIT]
   phone: "(435) 282-0383",                   // [EDIT]
   tel:   "+14352820383",                     // [EDIT]
-  hours: [               // 0 = Sunday. Use null for closed.
-    ["Sunday",    null],
+  hours: [               // 0 = Sunday. Use null for closed. Optional 3rd item = note.
+    ["Sunday",    [8,12], "by appointment"],
     ["Monday",    [8,18]],
     ["Tuesday",   [8,18]],
     ["Wednesday", [8,18]],
     ["Thursday",  [8,18]],
     ["Friday",    [8,18]],
-    ["Saturday",  [8,18]]
+    ["Saturday",  [8,14]]
   ]
 };
 
@@ -601,8 +627,8 @@ function chipRow(host, items, value, onPick){
 function drawHours(){
   const today = new Date().getDay();
   document.querySelectorAll(".hours").forEach(el=>{
-    el.innerHTML = SHOP.hours.map(([name,h],i)=>{
-      const txt = h ? `${(h[0]%12)||12}:00 AM – ${(h[1]%12)||12}:00 PM` : "Closed";
+    el.innerHTML = SHOP.hours.map(([name,h,note],i)=>{
+      const txt = h ? `${fmtHour(h[0])} – ${fmtHour(h[1])}${note ? ` <em>(${note})</em>` : ""}` : "Closed";
       return `<div class="${i===today?"today":""}"><span>${name}</span>${txt}</div>`;
     }).join("");
   });
@@ -625,7 +651,7 @@ function slotsFor(date){
   const [open,close] = SHOP.hours[date.getDay()][1], out = [];
   for(let h=open; h<close; h++){
     for(const m of [0,30]){
-      const label = ((h%12)||12)+":"+String(m).padStart(2,"0")+(h<12?" AM":" PM");
+      const label = ((h%12)||12)+":"+String(m).padStart(2,"0")+(h<12?" AM":" PM"); // 12 -> 12:30 PM
       out.push({label, taken:((date.getDate()*7 + h*3 + m) % 5) === 0});
     }
   }
@@ -672,21 +698,23 @@ function wireForm(){
 }
 
 /* ---------- live open/closed status (footer) ---------- */
-function fmtHour(h){ return ((h%12)||12) + ":00 " + (h<12 ? "AM" : "PM"); }
+function fmtHour(h){ return ((h%12)||12) + ":00 " + (h<12 ? "AM" : "PM"); }  // 12 -> 12:00 PM, 14 -> 2:00 PM
+/* Shop's local time (Logan, UT) so the banner is right for any visitor's timezone */
+function shopNow(){ const s = new Date().toLocaleString("en-US",{timeZone:"America/Denver"}); return new Date(s); }
 function drawStatus(){
   const els = document.querySelectorAll(".status");
   if(!els.length) return;
-  const now = new Date(), d = now.getDay(), mins = now.getHours()*60 + now.getMinutes();
-  const h = SHOP.hours[d][1];
+  const now = shopNow(), d = now.getDay(), mins = now.getHours()*60 + now.getMinutes();
+  const h = SHOP.hours[d][1], note = SHOP.hours[d][2];
   let txt = "";
   if(h && mins >= h[0]*60 && mins < h[1]*60){
-    txt = "Open until " + fmtHour(h[1]);
+    txt = note ? "Open by appointment until " + fmtHour(h[1]) : "Open until " + fmtHour(h[1]);
   } else if(h && mins < h[0]*60){
-    txt = "Opens today at " + fmtHour(h[0]);
+    txt = "Opens today at " + fmtHour(h[0]) + (note ? " (" + note + ")" : "");
   } else {
     for(let i=1;i<=7;i++){
       const n = (d+i)%7, nh = SHOP.hours[n][1];
-      if(nh){ txt = (i===1 ? "Opens tomorrow at " : "Opens " + DAY[n] + " at ") + fmtHour(nh[0]); break; }
+      if(nh){ txt = (i===1 ? "Opens tomorrow at " : "Opens " + DAY[n] + " at ") + fmtHour(nh[0]) + (SHOP.hours[n][2] ? " (" + SHOP.hours[n][2] + ")" : ""); break; }
     }
   }
   els.forEach(el => el.textContent = txt);
